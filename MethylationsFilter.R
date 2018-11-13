@@ -3,6 +3,7 @@ library(dplyr)
 Pvalue <- 0.01
 FoldChange <- 2
 PvaluePearson <- 0.05
+PearsonCorrelation <- 0.3
 BetaDifference <- 0.1
 
 unificati <-
@@ -11,13 +12,13 @@ unificati <-
 			file.choose(),
 			stringsAsFactors = F,
 			sep = ";",
+			dec = '.',
 			header = T,
 			na.strings = c("", "NA"),
 			row.names = 1
 		)
 	)
 
-#unificati<-unificati[rowSums(is.na(unificati)) != ncol(unificati), ]
 unificati <- na.omit(unificati)
 
 unificati <- tibble::rownames_to_column(unificati, "sample")
@@ -30,12 +31,6 @@ unificati_new <-
 			(medianUP < medianMedium & medianMedium < medianDown)
 	)
 
-# unificati_new <-
-#   unificati[!(((unificati$medianUP > unificati$medianMedium) &
-#                  (unificati$medianMedium > unificati$medianDown)
-#   ) | ((unificati$medianUP < unificati$medianMedium) &
-#        (unificati$medianMedium < unificati$medianDown))), ]
-
 unificati_new <-
 	filter(unificati_new,
 		   (
@@ -43,12 +38,6 @@ unificati_new <-
 		   		abs(bd_UpvsDOWN) >= BetaDifference &
 		   		abs(bd_MIDvsDOWN) >= BetaDifference
 		   ))
-
-
-# unificati_new <-
-#   unificati_new[!(((abs(unificati_new$bd_UpvsMID)) >= BetaDifference &
-#     (abs(unificati_new$bd_UpvsDOWN)) >= BetaDifference &
-#     	(abs(unificati_new$bd_MIDvsDOWN)) >= BetaDifference)), ]
 
 unificati_new <-
 	filter(
@@ -58,11 +47,6 @@ unificati_new <-
 				pvalue_UpvsDOWN <= Pvalue & pvalue_MIDvsDOWN <= Pvalue
 		)
 	)
-
-# unificati_new <-
-#   unificati_new[!((unificati_new[,8] <= Pvalue) &
-#                     (unificati_new[,9] <= Pvalue) &
-#                     (unificati_new[,10]<= Pvalue)), ]
 
 unificati_new <-
 	filter(
@@ -74,16 +58,18 @@ unificati_new <-
 		)
 	)
 
-# unificati_new <-
-#   unificati_new[!((unificati_new[,13] >= FoldChange) &
-#                     (unificati_new[,14] >= FoldChange) &
-#                     (unificati_new[,15] >= FoldChange)), ]
 
 unificati_new <-
 	filter(unificati_new, (pvalue_pearson_correlation <= PvaluePearson))
 
-# unificati_new <-
-#   unificati_new[!(unificati_new$pvalue_pearson_correlation <= PvaluePearson), ]
+unificati_new <-
+	filter(
+		unificati_new,
+		(
+			pearson_correlation >= PearsonCorrelation |
+				pearson_correlation <= -PearsonCorrelation
+		)
+	)
 
 unificati_new <-
 	filter(
@@ -94,11 +80,6 @@ unificati_new <-
 				pvalue_MIDvsDOWN.gene. <= Pvalue
 		)
 	)
-
-# unificati_new <-
-# 	unificati_new[!((unificati_new[,16] <= Pvalue) &
-# 						(unificati_new[,17] <= Pvalue) &
-# 						(unificati_new[,18] <= Pvalue)), ]
 
 write.csv(unificati_new,
 		  row.names = FALSE,
